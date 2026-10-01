@@ -1,164 +1,21 @@
-# CAT Agent Skills
+# Eye.Art Polyphemus for Copilot Studio
 
-A community gallery of **skills for AI agents** — reusable instruction sets (and
-optional script bundles) you can drop into **Cowork**, **Copilot Studio**, and
-**Scout** agents. The site is inspired by [pcf.gallery](https://pcf.gallery/):
-an infinitely scrolling, searchable, filterable grid of skills, each with its
-own detail page and downloads.
+Polyphemus is Eye.Art's hosted image workflow router. Connect the MCP endpoint to a Copilot Studio agent, then add this skill so the agent knows when to create, edit, or retrieve images and how to keep follow-up turns grounded in the source image and conversation.
 
-Built with [Astro](https://astro.build/) + [Tailwind CSS](https://tailwindcss.com/),
-deployed as a static site to GitHub Pages.
+## Setup
 
-## ✨ Features
+1. In Copilot Studio, add a custom Model Context Protocol server using `https://eye.art/api/eye-mcp` with no authentication. The custom MCP server flow is documented by Microsoft as a preview feature.
+2. Review the discovered tools and enable the Eye.Art actions the agent needs.
+3. Upload `SKILL.md` to the agent's Skills section.
+4. Test a simple generation and a follow-up edit in Preview. Confirm the activity trace shows the Eye.Art tool call and inspect the returned status before showing an image.
 
-- **Infinite-scroll gallery** with auto-generated branded covers (no image
-  assets to maintain).
-- **Platform filtering** across Cowork, Copilot Studio, and Scout.
-- **Client-side search** and **tag filtering** with shareable
-  `?q=`/`?tag=`/`?platform=`/`?sort=` URLs.
-- **Sort** by Featured, Top rated, Name, or Newest.
-- **Skill detail pages** rendering the instructions, metadata, and downloads.
-- **Skill ratings**: 👍 a skill with your GitHub account (via GitHub
-  Discussions); the gallery bakes in the counts and offers a "Top rated" sort.
-  See [`docs/ratings.md`](docs/ratings.md).
-- **Downloads**: the skill as a `SKILL.md` file, plus an optional `.zip` bundle
-  when a skill ships files beyond its `SKILL.md`.
-- **More than skills**: also hosts **Cowork plugins** (M365 `.zip` packages) and
-  **Scout automations** (scheduled `.json` exports) and **Scout automation
-  installers** (a `.zip` with an `INSTALL.md` + JSON config that sets the
-  automation up), each with its own badge, filter, and verbatim download.
+This gallery entry is a community-contributed skill, not a Microsoft or Eye.Art integration certification. The gallery skill itself does not install the MCP server.
 
-## 🚀 Local development
+## What it can do
 
-```bash
-npm install
-npm run dev      # start the dev server (http://localhost:4321/cat-agent-skills)
-npm run build    # production build into ./dist
-npm run preview  # preview the production build locally
-```
+- Generate and edit images through one chat-oriented endpoint.
+- Keep related turns connected with a `conversationId` and use source images for focused edits.
+- Route requests for artist-guided images, small illustrations, webpage-matched art, editable SVG, and supported motion.
+- Return asynchronous job identifiers for longer generations so the agent can poll for completion.
 
-> The site is configured with a `base` path of `/cat-agent-skills`
-> for GitHub Pages, so local URLs include that prefix.
-
-## 🧩 Adding a skill
-
-Add **one submission to the [`submissions/`](submissions/) folder** and open a
-PR — you never edit `src/content/skills/` by hand. CI validates the metadata and
-generates the published page (and any download bundle) for you. See
-[`CONTRIBUTING.md`](CONTRIBUTING.md) for the full guide.
-
-Every submission is a `submissions/<slug>/` folder with a `metadata.json` sidecar
-plus one skill payload — an **unpacked** `SKILL.md` (+ optional dirs):
-
-```
-submissions/<slug>/
-├── metadata.json  # OR metadata.yaml — catalog details (sidecar, not bundled)
-├── README.md      # OPTIONAL human-facing note (not bundled) — shown on the page
-└── an unpacked skill:
-    ├── SKILL.md    # name + agent description + instructions
-    ├── scripts/    # optional executable code
-    ├── references/ # optional docs
-    └── assets/     # optional templates / data files
-```
-
-A skill carries **two** descriptions: the **agent** description in `SKILL.md`
-frontmatter (what the model reads to decide when to invoke), and the **catalog**
-description in `metadata.json` (the friendly one-liner shown in the gallery). An optional **`README.md`** adds a third, human-only voice: it never ships to the
-agent and, when present, **becomes the main content** on the detail page — the
-author's overview, setup, and usage — with the exact `SKILL.md` still offered as
-the download.
-
-`submissions/my-great-skill/SKILL.md`:
-
-```markdown
----
-name: my-great-skill
-description: Use this skill whenever the user… (the agent-facing trigger).
----
-
-Write the agent instructions here as Markdown — this body becomes the
-"Instructions" section on the detail page.
-```
-
-`submissions/my-great-skill/metadata.json`:
-
-```json
-{
-  "name": "My Great Skill",
-  "description": "One-line catalog summary shown on the card and detail page.",
-  "platforms": ["Cowork", "Copilot Studio", "Scout"],
-  "tags": ["productivity", "automation"],
-  "author": "Your Name",
-  "authorUrl": "https://example.com",
-  "version": "1.0.0"
-}
-```
-
-> `name`, `description`, `platforms`, and `tags` are required (`platforms` must be
-> one or more of `Cowork`, `Copilot Studio`, `Scout`). PRs run a build check that
-> validates every skill against the schema.
-
-> Besides single skills, you can submit a **Scout automation** (a `.json` export,
-> Scout-only). It drops into `submissions/<slug>/` the same way and is
-> auto-detected by its payload. (Cowork plugins and Scout automation installers
-> were `.zip` packages and are **no longer accepted** — `.zip` payloads have
-> been retired; existing ones stay published.) See
-> [`submissions/README.md`](submissions/README.md) for the details.
-
-## Add Copilot Studio skills from GitHub
-
-In Copilot Studio, choose **Add skill** > **From GitHub** and paste this public
-folder URL:
-
-`https://github.com/microsoft/cat-agent-skills/tree/copilot-studio-skills`
-
-The dedicated branch is generated from submissions on `main` whose `platforms`
-include `Copilot Studio`. Its root contains only unpacked canonical skills with
-a root `SKILL.md` and their resources; gallery metadata and root human-facing
-READMEs are excluded.
-
-## 📁 Project structure
-
-```
-src/
-  components/      SkillCard, SkillCover (the branded "screenshot")
-  content/skills/  generated skill pages (produced from submissions/ — do not edit by hand)
-  layouts/         base page layout
-  lib/             cover theming + small helpers
-  data/            ratings.json (build-time 👍 snapshot; see docs/ratings.md)
-  pages/
-    index.astro          home gallery (search + filter + sort + infinite scroll)
-    skills/[slug].astro  skill detail page (instructions, download, ratings)
-    skills/[slug].md.ts  raw Markdown download endpoint
-    tags/[tag].astro     per-tag listing
-    skills.json.ts       metadata endpoint
-public/
-  bundles/         downloadable .zip skill bundles
-submissions/       drop-in skill submissions (folders imported by CI)
-scripts/           import-submissions + validate-skill + fetch-ratings
-.github/workflows/ ci.yml (PR build check) + deploy.yml (Pages deploy + ratings)
-```
-
-## 🚢 Deployment
-
-Pull requests run `.github/workflows/ci.yml`, which builds the site (and thereby
-validates every skill against the content schema). Pushing to `main` triggers
-`.github/workflows/deploy.yml`, which builds and publishes the site to GitHub
-Pages at `https://microsoft.github.io/cat-agent-skills/`. Enable Pages in the
-repo settings with the **GitHub Actions** source.
-
-Before each build, `deploy.yml` runs `npm run ratings:fetch` to snapshot 👍
-counts from GitHub Discussions, and a daily `schedule` cron refreshes them
-without a code push. See [`docs/ratings.md`](docs/ratings.md) for the one-time
-giscus/Discussions setup.
-
-## 🆘 Support
-
-CAT Agent Skills is an **example implementation**. The underlying Microsoft
-features (Power Apps, Power Automate, Dataverse, Copilot Studio, etc.) are fully
-supported, but the skills themselves are provided as-is. See
-[`SUPPORT.md`](SUPPORT.md) for how to file issues and get help.
-
-## License
-
-[MIT](LICENSE)
+Eye.Art is free to try without a key, subject to an anonymous rate limit of 20 generations per hour per caller network identity. Prompts, images, and conversation history may be retained for up to 30 days for service history and debugging. Do not send sensitive references without the user's direction.
